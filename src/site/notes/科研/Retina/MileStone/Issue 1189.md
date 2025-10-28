@@ -25,13 +25,19 @@
 |                   | load 耗时（s） | update 吞吐（ops/s） |
 | ----------------- | ---------- | ---------------- |
 | ConcurrentHashMap | 467.14     | 291630.21（十万）    |
-| Caffeine（1kw）     | 145.77     | 1353523.39（百万）   |
-| Caffeine（2e）      | 48.84      | 12130401.82（千万）  |
+| Caffeine（1kw）     |            |                  |
+| Caffeine（2e）      | timeout    |                  |
 
 ## Cache 优化思路
 
-key 的类型严重影响了性能，主要原因在于 Hash
-尝试将 IndexProto.IndexKey 分解，将 tableId，indexId，key 拼凑为 String 作为 key
+key 的类型严重影响了性能，主要原因在于自定义实现的 Hash 不够好
+尝试将 IndexProto.IndexKey 分解，将 tableId，indexId，key 拼凑为 String 作为 key，timestamp，rowId 拼凑为 String 作为 value
+
+|                   | load 耗时（s） | update 吞吐（ops/s） |
+| ----------------- | ---------- | ---------------- |
+| ConcurrentHashMap | 25.95      | 10876954.45（千万）  |
+| Caffeine（1kw）     | 183.53     | 960730.15（十万）    |
+| Caffeine（2e）      | 85.44      | 9900990.10（百万）   |
 
 ## 测试细节
 
@@ -42,3 +48,4 @@ key 的类型严重影响了性能，主要原因在于 Hash
 * 总共进行 1.6e + 1600kw = 1.76e 插入，2e 缓存大小足够最佳
 * 基准测试后直接排除 Guava，故后面实验没有
 * Cache 预实验 key 中的 timestamp 设置为 0，保证正常 get 
+* Cache 预实验使用 Caffeine 加载时间超过了 27 分钟，不再测试
